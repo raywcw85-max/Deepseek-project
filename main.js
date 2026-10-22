@@ -16,6 +16,7 @@ import {
     initPlayer,
     updatePlayer
 } from './player.js';
+import { audio } from './audio.js';
 
 const THREE = window.THREE;
 
@@ -262,12 +263,36 @@ document.getElementById('time-btn').addEventListener('click', () => {
     applyTimeOfDay(nextMode, true);
 });
 
+const musicBtn = document.getElementById('music-btn');
+musicBtn.addEventListener('click', () => {
+    const enabled = audio.toggleMusic();
+    musicBtn.textContent = enabled ? '🎵 音樂' : '🔇 音樂';
+    if (enabled) audio.unlock();
+    showToast(
+        enabled ? '🎵 背景音樂已開啟' : '🔇 背景音樂已關閉',
+        enabled ? 'bg-amber-500/95 border-amber-200' : 'bg-slate-800/95 border-slate-400'
+    );
+});
+
+const soundBtn = document.getElementById('sound-btn');
+soundBtn.addEventListener('click', () => {
+    const muted = audio.toggleMuted();
+    soundBtn.textContent = muted ? '🔇 靜音' : '🔊 音效';
+    if (!muted) audio.unlock();
+    showToast(
+        muted ? '🔇 已關閉音效' : '🔊 音效已開啟',
+        muted ? 'bg-slate-800/95 border-slate-400' : 'bg-emerald-600/95 border-emerald-300'
+    );
+});
+
 document.getElementById('start-game-btn').addEventListener('click', () => {
     introModal.classList.add('hidden');
     if (!gameState.lapStartTime) {
         gameState.lapStartTime = performance.now();
     }
     gameState.isRunning = true;
+    // 使用者手勢中解鎖 AudioContext，並啟動松山環境音
+    audio.unlock();
 });
 
 // ==========================================

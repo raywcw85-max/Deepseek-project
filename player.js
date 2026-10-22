@@ -9,6 +9,7 @@ import {
     WORLD_SCALE,
     GUIA_HILL_CENTER
 } from './track.js';
+import { audio } from './audio.js';
 
 const THREE = window.THREE;
 
@@ -61,6 +62,7 @@ export const npcs = [];
 let notify = () => {};
 let notifySubtitle = () => {};
 let npcBumpCooldown = 0;
+let wasSprinting = false;
 
 // ==========================================
 // 2. 建立關節動畫跑手角色 (玩家 + 街坊 NPC)
@@ -208,6 +210,7 @@ export function initPlayer(scene, options = {}) {
     notify = options.showToast || (() => {});
     notifySubtitle = options.showSubtitle || (() => {});
     npcBumpCooldown = 0;
+    wasSprinting = false;
 
     // 建立玩家主角容器；先放方塊跑手，FBX 載入成功後自動替換
     player = {
@@ -476,6 +479,11 @@ export function updatePlayer(dt) {
     const targetSpeed = (gameState.isSprinting ? gameState.maxSprintSpeed : gameState.baseSpeed) + slopeSpeedBonus;
     gameState.speed = THREE.MathUtils.lerp(gameState.speed, Math.max(6.5, targetSpeed), dt * 3.5);
 
+    // 2b. 音效：依速度播放步頻，並在開始衝刺時播放滑音
+    if (gameState.isSprinting && !wasSprinting) audio.playBoost();
+    wasSprinting = gameState.isSprinting;
+    audio.updateFootsteps(dt, gameState.speed, gameState.isSprinting);
+
     // 4. 手動控制轉向 + 輕微彎道輔助（讓新手在手機上更容易過急彎）
     const manualTurnRate = 2.05; // 轉向靈敏度
     gameState.headingAngle -= gameState.steerInput * manualTurnRate * dt;
@@ -559,6 +567,7 @@ export function updatePlayer(dt) {
             gameState.stamina = Math.min(100, gameState.stamina + 35);
             b.mesh.visible = false;
             b.cooldown = 12; // 12秒後重生
+            audio.playDrink();
             notify("💧 飲水補給！體力回復 +35%", "bg-sky-600/95 border-sky-300");
         }
     });
